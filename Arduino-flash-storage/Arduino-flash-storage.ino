@@ -1,17 +1,20 @@
 #include <SPI.h>
 
+// Pins for read/write enable and LED
 #define R_ENABLE 7
 #define W_ENABLE 8
 #define LED 9
 
-unsigned char sensor;
+// Sensor pins
 #define minSensor 0
 #define maxSensor 3
 
+// Chip select (CS) pins
 unsigned char CS;
 #define minCS 2
 #define maxCS 3
 
+// Address/memory management
 unsigned long address;
 bool memFull;
 #define memMarker 0x00000
@@ -45,6 +48,8 @@ void setup()
         SPI.transfer(0);  // Set all bits in the STATUS register to 0
         digitalWrite(i, HIGH);
     }
+    
+    //eraseChips();  // Un-comment this and upload to erase memory
       
     // Find starting memory location
     for (CS = minCS; CS <= maxCS; CS++)
@@ -68,10 +73,13 @@ void setup()
             break;
         }
     }
-    memFull = (CS > maxCS);
+    memFull = (CS > maxCS);  // This means all chips are full
     
-    // Initialize sensor
-    sensor = minSensor;
+    // If read switch is enabled, read data and output to serial port
+    if (digitalRead(R_ENABLE))
+    {
+        
+    }
 }
 
 void loop()
@@ -94,10 +102,14 @@ void loop()
         // Proceed to read/write sensor data
         if (!memFull)
         {
-            if (sensor > maxSensor) sensor = minSensor;  // Check/reset sensor number
-            write2Bytes(CS, address, (analogRead(sensor + 14) << 4) + sensor);  // Combine reading and sensor into one 16-bit value
-            address += 2;  // Increment address
-            sensor++;  // Increment sensor number
+            write4Bytes(CS, address, millis());  // Write timestamp in ms
+            address += 4;
+            for (int i = minSensor; i <= maxSensor; i++)
+            {
+                write2Bytes(CS, address, analogRead(i));
+                address += 2;
+            }
+            delay(1);  // Prevent multiple readings having the same timestamp
         }
     }
 }
