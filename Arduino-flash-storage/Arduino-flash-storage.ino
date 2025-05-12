@@ -78,7 +78,39 @@ void setup()
     // If read switch is enabled, read data and output to serial port
     if (digitalRead(R_ENABLE))
     {
-        
+        // Determine size (in bytes) of one data point
+        unsigned char pointSize = 4;  // 4 bytes for timestamp
+        for (int i = minSensor; i <= maxSensor; i++) pointSize += 2;  // 2 bytes for each sensor reading
+        // Read data and output to serial port
+        Serial.begin(9600);
+        unsigned char readCS;
+        unsigned long readAddress;
+        unsigned long output;
+        for (readCS = minCS; readCS <= maxCS; readCS++)
+        {
+            digitalWrite(CS, LOW);
+            SPI.transfer(0x0B);  // Instruction to read memory (high-speed)
+            send3Bytes(minAddress);  // Send address
+            SPI.transfer(0);  // Send dummy byte
+            for (readAddress = minAddress; readAddress <= maxAddress; readAddress += pointSize)
+            {
+                // Read and output timestamp
+                output = 0;
+                for (int i = 1; i <= 4; i++) output = (output << 8) + SPI.transfer(0);
+                Serial.print(output);
+                Serial.print(',');
+                // Read and output each data point
+                for (int i = minSensor; i <= maxSensor; i++)
+                {
+                    output = SPI.transfer(0);
+                    output = (output << 8) + SPI.transfer(0);
+                    Serial.print(output);
+                    Serial.print(',');
+                }
+                Serial.print('\n');
+            }
+            digitalWrite(CS, HIGH);
+        }
     }
 }
 
@@ -97,7 +129,7 @@ void loop()
             CS++;  // Go to next chip
             address = minAddress;  // Reset address
         }
-        // Check CS
+        // Check chip
         memFull = (CS > maxCS);
         // Proceed to read/write sensor data
         if (!memFull)
@@ -106,7 +138,7 @@ void loop()
             address += 4;
             for (int i = minSensor; i <= maxSensor; i++)
             {
-                write2Bytes(CS, address, analogRead(i));
+                write2Bytes(CS, address, analogRead(i));  // Write sensor reading
                 address += 2;
             }
             delay(1);  // Prevent multiple readings having the same timestamp
