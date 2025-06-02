@@ -6,8 +6,8 @@
 #define LED 9
 
 // Sensor pins
-#define minSensor 0
-#define maxSensor 3
+#define minSensor A0
+#define maxSensor A3
 
 // Chip select (CS) pins
 unsigned char CS;
@@ -30,12 +30,12 @@ void setup()
 
     // Initialize SPI
     SPI.begin();
-    for (int i = minCS; i <= maxCS; i++)
+    for (int i = minCS; i <= maxCS; i++)  // Initialize memory CS pins
     {
         pinMode(i, OUTPUT);
         digitalWrite(i, HIGH);
     }
-    SPI.beginTransaction(SPISettings(25000000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(66000000, MSBFIRST, SPI_MODE0));
     
     // Initialize STATUS registers
     for (int i = minCS; i <= maxCS; i++)
