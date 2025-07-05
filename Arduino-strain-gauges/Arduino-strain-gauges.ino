@@ -1,7 +1,8 @@
 #include <SPI.h>
 
-// Chip select (CS) pin for ADC
-#define ADC A0
+// Chip select (CS) pins for ADCs
+#define minADC A0
+#define maxADC A1
 
 void setup() {
     Serial.begin(9600);
@@ -9,28 +10,36 @@ void setup() {
     // Initialize SPI
     SPI.begin();
     SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
-    pinMode(ADC, OUTPUT);  // Initialize ADC CS pin
-    digitalWrite(ADC, HIGH);
+    for (int i = minADC; i <= maxADC; i++) {  // Initialize ADC pins
+        pinMode(i, OUTPUT);
+        digitalWrite(i, HIGH);
+    }
     
-    // Reset ADC
-    digitalWrite(ADC, LOW);
-    SPI.transfer(0x06);  // Instruction to reset ADC
-    digitalWrite(ADC, HIGH);
+    // Reset ADCs
+    for (int i = minADC; i <= maxADC; i++) {
+        digitalWrite(ADC, LOW);
+        SPI.transfer(0x06);  // Instruction to reset ADC
+        digitalWrite(ADC, HIGH);
+    }
     delay(250);
-    
+        
     // Set ADC configuration registers
-    digitalWrite(ADC, LOW);
-    SPI.transfer(0x42);  // Instruction to write 3 bytes starting at register 0
-    SPI.transfer(0x0E);  // Settings for register 0
-    SPI.transfer(0xC4);  // Settings for register 1
-    SPI.transfer(0xC0);  // Settings for register 2
-    digitalWrite(ADC, HIGH);
-    //Serial.println(readConfig(), HEX);  // Print config
+    for (int i = minADC; i <= maxADC; i++) {
+        digitalWrite(i, LOW);
+        SPI.transfer(0x42);  // Instruction to write 3 bytes starting at register 0
+        SPI.transfer(0x0E);  // Settings for register 0
+        SPI.transfer(0xC4);  // Settings for register 1
+        SPI.transfer(0xC0);  // Settings for register 2
+        digitalWrite(i, HIGH);
+        //Serial.println(readConfig(), HEX);  // Print config
+    }
     
     // Start conversions
-    digitalWrite(ADC, LOW);
-    SPI.transfer(0x08); // Instruction to start conversions
-    digitalWrite(ADC, HIGH);
+    for (int i = minADC; i <= maxADC; i++) {
+        digitalWrite(i, LOW);
+        SPI.transfer(0x08);  // Instruction to start conversions
+        digitalWrite(i, HIGH);
+    }
 }
 
 void loop() {
