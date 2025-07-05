@@ -43,10 +43,6 @@ void setup() {
 }
 
 void loop() {
-    Serial.print(convertOutput(readData(A0)));
-    Serial.print(",");
-    Serial.println(convertOutput(readData(A1)));
-    delay(1000);
 }
 
 // Convert output from ADC into a readable value
