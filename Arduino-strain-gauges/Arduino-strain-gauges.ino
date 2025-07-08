@@ -1,19 +1,26 @@
 #include <SPI.h>
+#include <SD.h>
 
-// Chip select (CS) pins for ADCs
+// Chip select (CS) pins
 #define minADC A0
 #define maxADC A1
+#define SDpin 9
 
 void setup() {
     Serial.begin(9600);
     
     // Initialize SPI
     SPI.begin();
-    SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
+    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1));
     for (int i = minADC; i <= maxADC; i++) {  // Initialize ADC pins
         pinMode(i, OUTPUT);
         digitalWrite(i, HIGH);
     }
+    
+    // Initialize SD
+    pinMode(SDpin, OUTPUT);
+    digitalWrite(SDpin, HIGH);
+    SD.begin(SDpin);
     
     // Reset ADCs
     for (int i = minADC; i <= maxADC; i++) {
@@ -22,7 +29,7 @@ void setup() {
         digitalWrite(i, HIGH);
     }
     delay(250);
-        
+    
     // Set ADC configuration registers
     for (int i = minADC; i <= maxADC; i++) {
         digitalWrite(i, LOW);
@@ -31,7 +38,7 @@ void setup() {
         SPI.transfer(0xC4);  // Settings for register 1
         SPI.transfer(0xC0);  // Settings for register 2
         digitalWrite(i, HIGH);
-        //Serial.println(readConfig(i), HEX);  // Print config
+        Serial.println(readConfig(i), HEX);  // Print config
     }
     
     // Start conversions
@@ -43,6 +50,7 @@ void setup() {
 }
 
 void loop() {
+    
 }
 
 // Convert output from ADC into a readable value
