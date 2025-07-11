@@ -6,9 +6,11 @@
 #define maxADC A1
 #define SDpin 9
 
+int gaugeData[4];
+
 void setup() {
     Serial.begin(9600);
-    
+
     // Initialize SPI
     SPI.begin();
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1));
@@ -16,12 +18,12 @@ void setup() {
         pinMode(i, OUTPUT);
         digitalWrite(i, HIGH);
     }
-    
+
     // Initialize SD
     pinMode(SDpin, OUTPUT);
     digitalWrite(SDpin, HIGH);
     SD.begin(SDpin);
-    
+
     // Reset ADCs
     for (int i = minADC; i <= maxADC; i++) {
         digitalWrite(i, LOW);
@@ -29,7 +31,7 @@ void setup() {
         digitalWrite(i, HIGH);
     }
     delay(250);
-    
+
     // Set ADC configuration registers
     for (int i = minADC; i <= maxADC; i++) {
         digitalWrite(i, LOW);
@@ -38,9 +40,9 @@ void setup() {
         SPI.transfer(0xC4);  // Settings for register 1
         SPI.transfer(0xC0);  // Settings for register 2
         digitalWrite(i, HIGH);
-        Serial.println(readConfig(i), HEX);  // Print config
+        //Serial.println(readConfig(i), HEX);  // Print register settings
     }
-    
+
     // Start conversions
     for (int i = minADC; i <= maxADC; i++) {
         digitalWrite(i, LOW);
@@ -50,7 +52,6 @@ void setup() {
 }
 
 void loop() {
-    
 }
 
 // Convert output from ADC into a readable value
@@ -80,25 +81,26 @@ long twosComplement(unsigned long num, unsigned char N) {
     return output;
 }
 
-unsigned long readData(int CS) {
-    digitalWrite(CS, LOW);
+// Read raw data from ADC
+unsigned long readData(int chipSelect) {
+    digitalWrite(chipSelect, LOW);
     SPI.transfer(0x10);  // Instruction to read data
     unsigned long data = 0;
     for (int i = 1; i <= 3; i++) {  // Get data bytes
         data = (data << 8) + SPI.transfer(0);
     }
-    digitalWrite(CS, HIGH);
+    digitalWrite(chipSelect, HIGH);
     return data;
 }
 
-// Read configuration registers
-unsigned long readConfig(int CS) {
+// Read ADC configuration registers
+unsigned long readConfig(int chipSelect) {
     unsigned long output;
-    digitalWrite(CS, LOW);
+    digitalWrite(chipSelect, LOW);
     SPI.transfer(0x23);  // Instruction to read 4 bytes starting at register 0
     for (int i = 1; i <= 4; i++) {
         output = (output << 8) + SPI.transfer(0);
     }
-    digitalWrite(CS, HIGH);
+    digitalWrite(chipSelect, HIGH);
     return output;
 }
